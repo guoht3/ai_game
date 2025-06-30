@@ -1,0 +1,11 @@
+{
+  "name": "airpg",
+  "version": "1.0.0",
+  "description": "RPG Battle",
+  "main": "electron-main.js",
+  "author": "",
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "dotenv": "^16.5.0"
+  }
+}
