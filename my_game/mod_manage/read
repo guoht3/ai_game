@@ -1,0 +1,15 @@
+mod_folder/
+├── mod.json          # Mod元数据
+├── assets/           # 资源文件
+│   ├── images/       # 图片资源
+│   ├── sounds/       # 音频资源
+│   └── data/         # 数据文件
+├── scripts/          # 脚本文件
+│   ├── functions.js  # 卡片函数实现
+│   └── events.js     # 事件处理
+└── cards/            # 卡片定义
+    ├── characters.json
+    ├── items.json
+    ├── research.json
+    ├── equipment.json
+    └── culture.json

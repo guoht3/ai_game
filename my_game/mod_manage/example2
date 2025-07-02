@@ -1,0 +1,23 @@
+{
+  "cards": [
+    {
+      "name": "精灵法师",
+      "description": "擅长魔法的精灵角色",
+      "image_path": "assets/images/elf_mage.png",
+      "function_name": "elfMageAbility",
+      "base_value": 100,
+      "thresholds": [
+        {
+          "value": 50,
+          "description": "初级法师",
+          "effect": "魔法伤害+10%"
+        },
+        {
+          "value": 100,
+          "description": "高级法师",
+          "effect": "魔法伤害+25%，获得火球术"
+        }
+      ]
+    }
+  ]
+}

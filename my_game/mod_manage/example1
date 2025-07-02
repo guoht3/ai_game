@@ -1,0 +1,19 @@
+{
+  "name": "fantasy_expansion",
+  "version": "1.0.0",
+  "author": "ModAuthor",
+  "description": "Fantasy themed expansion pack",
+  "dependencies": [],
+  "api_version": "1.0",
+  "cards": {
+    "characters": "cards/characters.json",
+    "items": "cards/items.json",
+    "research": "cards/research.json",
+    "equipment": "cards/equipment.json",
+    "culture": "cards/culture.json"
+  },
+  "scripts": {
+    "functions": "scripts/functions.js",
+    "events": "scripts/events.js"
+  }
+}

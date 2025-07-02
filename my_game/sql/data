@@ -1,0 +1,22 @@
+-- 玩家存档表
+CREATE TABLE game_saves (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    save_name VARCHAR(100) NOT NULL,
+    player_name VARCHAR(100),
+    game_data TEXT, -- JSON格式存储游戏状态
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_played DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 玩家拥有的卡片实例表
+CREATE TABLE player_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    save_id INTEGER NOT NULL,
+    card_id INTEGER NOT NULL,
+    current_value REAL DEFAULT 0,
+    level INTEGER DEFAULT 1,
+    experience REAL DEFAULT 0,
+    custom_data TEXT, -- JSON格式存储自定义数据
+    FOREIGN KEY (save_id) REFERENCES game_saves(id) ON DELETE CASCADE,
+    FOREIGN KEY (card_id) REFERENCES cards(id)
+);

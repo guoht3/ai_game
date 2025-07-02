@@ -1,0 +1,59 @@
+class GameDatabase {
+    constructor(dbPath) {
+        this.db = new sqlite3.Database(dbPath);
+        this.initTables();
+    }
+
+    // 初始化数据库表
+    async initTables() {
+        // 执行上述CREATE TABLE语句
+    }
+
+    // 加载卡片数据
+    async loadCards(cardType = null, modId = null) {
+        let query = `
+            SELECT c.*, ct.type_name, vt.threshold_value, vt.description as threshold_desc
+            FROM cards c
+            JOIN card_types ct ON c.card_type_id = ct.id
+            LEFT JOIN value_thresholds vt ON c.id = vt.card_id
+            WHERE c.is_active = 1
+        `;
+        
+        const params = [];
+        if (cardType) {
+            query += ' AND ct.type_name = ?';
+            params.push(cardType);
+        }
+        if (modId !== null) {
+            query += ' AND c.mod_id = ?';
+            params.push(modId);
+        }
+        
+        return this.db.all(query, params);
+    }
+
+    // 安装Mod
+    async installMod(modData, modPath) {
+        const transaction = this.db.prepare('BEGIN TRANSACTION');
+        try {
+            // 插入mod记录
+            const modResult = await this.db.run(
+                'INSERT INTO mods (mod_name, version, author, description, mod_path) VALUES (?, ?, ?, ?, ?)',
+                [modData.name, modData.version, modData.author, modData.description, modPath]
+            );
+            
+            const modId = modResult.lastID;
+            
+            // 插入卡片数据
+            for (const [cardType, cardsData] of Object.entries(modData.cards)) {
+                await this.insertModCards(modId, cardType, cardsData);
+            }
+            
+            await this.db.run('COMMIT');
+            return modId;
+        } catch (error) {
+            await this.db.run('ROLLBACK');
+            throw error;
+        }
+    }
+}

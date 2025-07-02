@@ -1,0 +1,47 @@
+-- 卡片类型表
+CREATE TABLE card_types (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type_name VARCHAR(50) NOT NULL UNIQUE, -- 'character', 'item', 'research', 'equipment', 'culture'
+    display_name VARCHAR(100) NOT NULL,
+    description TEXT
+);
+
+-- 主卡片表
+CREATE TABLE cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_type_id INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    image_path VARCHAR(255),
+    function_name VARCHAR(100), -- 对应的函数名
+    base_value REAL DEFAULT 0, -- 基础数值
+    mod_id INTEGER, -- 来源mod的ID，NULL表示官方内容
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT 1,
+    FOREIGN KEY (card_type_id) REFERENCES card_types(id),
+    FOREIGN KEY (mod_id) REFERENCES mods(id)
+);
+
+-- 数值阈值表
+CREATE TABLE value_thresholds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_id INTEGER NOT NULL,
+    threshold_value REAL NOT NULL,
+    description TEXT NOT NULL,
+    effect_description TEXT,
+    FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+);
+
+-- Mod管理表
+CREATE TABLE mods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mod_name VARCHAR(100) NOT NULL UNIQUE,
+    version VARCHAR(20) NOT NULL,
+    author VARCHAR(100),
+    description TEXT,
+    mod_path VARCHAR(255) NOT NULL,
+    is_enabled BOOLEAN DEFAULT 1,
+    install_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    dependencies TEXT -- JSON格式存储依赖关系
+);

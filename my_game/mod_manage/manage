@@ -1,0 +1,57 @@
+class ModManager {
+    constructor(gameDb, modsDirectory) {
+        this.gameDb = gameDb;
+        this.modsDirectory = modsDirectory;
+        this.loadedMods = new Map();
+        this.scriptFunctions = new Map();
+    }
+
+    // 扫描并加载所有Mod
+    async loadAllMods() {
+        const modFolders = fs.readdirSync(this.modsDirectory);
+        
+        for (const folder of modFolders) {
+            const modPath = path.join(this.modsDirectory, folder);
+            const modConfigPath = path.join(modPath, 'mod.json');
+            
+            if (fs.existsSync(modConfigPath)) {
+                await this.loadMod(modPath);
+            }
+        }
+    }
+
+    // 加载单个Mod
+    async loadMod(modPath) {
+        const modConfig = JSON.parse(fs.readFileSync(path.join(modPath, 'mod.json')));
+        
+        // 检查依赖
+        if (!this.checkDependencies(modConfig.dependencies)) {
+            throw new Error(`Mod ${modConfig.name} has unmet dependencies`);
+        }
+        
+        // 加载脚本函数
+        if (modConfig.scripts && modConfig.scripts.functions) {
+            const functionsPath = path.join(modPath, modConfig.scripts.functions);
+            const functions = require(functionsPath);
+            
+            for (const [funcName, func] of Object.entries(functions)) {
+                this.scriptFunctions.set(funcName, func);
+            }
+        }
+        
+        // 注册到数据库
+        const modId = await this.gameDb.installMod(modConfig, modPath);
+        this.loadedMods.set(modConfig.name, { config: modConfig, id: modId, path: modPath });
+        
+        return modId;
+    }
+
+    // 执行卡片函数
+    executeCardFunction(functionName, ...args) {
+        const func = this.scriptFunctions.get(functionName);
+        if (func && typeof func === 'function') {
+            return func(...args);
+        }
+        throw new Error(`Function ${functionName} not found`);
+    }
+}
