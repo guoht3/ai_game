@@ -60,7 +60,24 @@ async function main() {
         `;
         db.run(createTableSQL); // .run() 方法执行不返回结果的SQL语句
         log("✅ `skill_card` 表创建成功!");
-
+        log("准备创建'card'表...")
+        let createCardSQL = `
+            CREATE TABLE card (
+                id VARCHAR(15) PRIMARY KEY,
+                name TEXT,
+                description_id TEXT,
+                icon_id VARCHAR(15),
+                function_id VARCHAR(15),
+                function_data INTEGER,
+                BUILD_COST INTEGER,
+                MAINTAIN_COST INTEGER,
+                BUILD_PROGRESS INTEGER,
+                BUILD_SPEED INTEGER,
+                TREE_ID VARCHAR(15)
+            );
+        `;
+        db.run(createCardSQL); //.run() 方法执行不返回结果的SQL语句
+        log("✅ `skill_card` 表创建成功!");
         // 4. 【核心】向数据库中写入数据
         // 我们将使用“预处理语句”（Prepared Statements），这是插入多行数据的最佳实践
         // 它更安全、更高效

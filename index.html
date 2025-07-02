@@ -1,24 +1,843 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JS SQL Game Demo</title>
+    <title>游戏数据库管理系统</title>
     <style>
-        body { font-family: sans-serif; background: #282c34; color: #abb2bf; padding: 20px; }
-        pre { background: #21252b; padding: 15px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
-        h2 { color: #61afef; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            background: white;
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+        
+        .tab:hover {
+            background: #e9ecef;
+        }
+        
+        .content {
+            background: white;
+            border-radius: 0 0 10px 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            width: 300px;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+        
+        .edit-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>JavaScript SQL 游戏数据库示例</h1>
-    <h2>数据库操作日志:</h2>
-    <pre id="output">正在加载数据库...</pre>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 游戏数据库管理系统</h1>
+            <p>管理游戏资产和卡片数据</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('assets')">📁 资产管理</button>
+            <button class="tab" onclick="switchTab('cards')">🃏 卡片管理</button>
+            <button class="tab" onclick="switchTab('view')">👁️ 数据查看</button>
+        </div>
+        
+        <div class="content">
+            <!-- 资产管理标签页 -->
+            <div id="assets" class="tab-content active">
+                <h2>📁 添加新资产</h2>
+                <div id="asset-status"></div>
+                
+                <form id="asset-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="asset-type">资产类型</label>
+                            <select id="asset-type" required>
+                                <option value="">请选择资产类型</option>
+                                <option value="PHOTO">图片资产 (PHO)</option>
+                                <option value="TEXT">文本资产 (TEX)</option>
+                                <option value="SHEET">表格资产 (SHE)</option>
+                                <option value="METHOD">方法资产 (MET)</option>
+                                <option value="AUDIO">音频资产 (AUD)</option>
+                                <option value="VIDEO">视频资产 (VID)</option>
+                                <option value="CONFIG">配置资产 (CFG)</option>
+                                <option value="SCRIPT">脚本资产 (SCR)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="asset-path">相对路径</label>
+                            <input type="text" id="asset-path" placeholder="例如: photo/character01.png" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn">➕ 添加资产</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearAssetForm()">🔄 清空表单</button>
+                </form>
+                
+                <div id="asset-list">
+                    <h3>📋 资产列表</h3>
+                    <div class="search-box">
+                        <input type="text" id="asset-search" placeholder="搜索资产..." onkeyup="filterAssets()">
+                        <select id="asset-filter" onchange="filterAssets()">
+                            <option value="">所有类型</option>
+                            <option value="PHOTO">图片资产</option>
+                            <option value="TEXT">文本资产</option>
+                            <option value="SHEET">表格资产</option>
+                            <option value="METHOD">方法资产</option>
+                            <option value="AUDIO">音频资产</option>
+                            <option value="VIDEO">视频资产</option>
+                            <option value="CONFIG">配置资产</option>
+                            <option value="SCRIPT">脚本资产</option>
+                        </select>
+                    </div>
+                    <div id="assets-table-container"></div>
+                </div>
+            </div>
+            
+            <!-- 卡片管理标签页 -->
+            <div id="cards" class="tab-content">
+                <h2>🃏 添加新卡片</h2>
+                <div id="card-status"></div>
+                
+                <form id="card-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="card-type">卡片类型</label>
+                            <select id="card-type" required>
+                                <option value="">请选择卡片类型</option>
+                                <option value="FACILITY">设施 (FAC)</option>
+                                <option value="FIGURE">角色 (FIG)</option>
+                                <option value="TECHNOLOGY">科技 (TEC)</option>
+                                <option value="MECHANISM">机构 (MEC)</option>
+                                <option value="CULTURE">文化 (CUL)</option>
+                                <option value="LAW">法律 (LAW)</option>
+                                <option value="ARMY">军队 (ARM)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="card-name">卡片名称</label>
+                            <input type="text" id="card-name" placeholder="例如: 研究中心" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="description-id">描述资产ID</label>
+                            <input type="text" id="description-id" placeholder="例如: TEX001">
+                        </div>
+                        <div class="form-group">
+                            <label for="icon-id">图标资产ID</label>
+                            <input type="text" id="icon-id" placeholder="例如: PHO001">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="function-id">功能资产ID</label>
+                            <input type="text" id="function-id" placeholder="例如: SCR001">
+                        </div>
+                        <div class="form-group">
+                            <label for="tree-id">科技树ID</label>
+                            <input type="text" id="tree-id" placeholder="例如: TEC001">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="function-data">功能数据</label>
+                        <textarea id="function-data" rows="3" placeholder="JSON格式的功能数据"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="build-cost">建造成本</label>
+                            <input type="number" id="build-cost" value="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="maintain-cost">维护成本</label>
+                            <input type="number" id="maintain-cost" value="0" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="build-progress">建造进度</label>
+                            <input type="number" id="build-progress" value="0" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="build-speed">建造速度</label>
+                            <input type="number" id="build-speed" value="1" min="1">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn">➕ 添加卡片</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearCardForm()">🔄 清空表单</button>
+                </form>
+                
+                <div id="card-list">
+                    <h3>📋 卡片列表</h3>
+                    <div class="search-box">
+                        <input type="text" id="card-search" placeholder="搜索卡片..." onkeyup="filterCards()">
+                        <select id="card-filter" onchange="filterCards()">
+                            <option value="">所有类型</option>
+                            <option value="FACILITY">设施</option>
+                            <option value="FIGURE">角色</option>
+                            <option value="TECHNOLOGY">科技</option>
+                            <option value="MECHANISM">机构</option>
+                            <option value="CULTURE">文化</option>
+                            <option value="LAW">法律</option>
+                            <option value="ARMY">军队</option>
+                        </select>
+                    </div>
+                    <div id="cards-table-container"></div>
+                </div>
+            </div>
+            
+            <!-- 数据查看标签页 -->
+            <div id="view" class="tab-content">
+                <h2>👁️ 数据库概览</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>📊 数据库统计</label>
+                        <div id="database-stats" class="loading">正在加载统计信息...</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="query-input">🔍 自定义查询</label>
+                    <textarea id="query-input" rows="4" placeholder="输入SQL查询语句，例如: SELECT * FROM asset LIMIT 10;"></textarea>
+                    <button type="button" class="btn" onclick="executeCustomQuery()">▶️ 执行查询</button>
+                </div>
+                
+                <div id="query-result"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- 首先加载 sql.js 库 -->
     <script src="lib/sql-wasm.js"></script>
-    <!-- 然后加载我们自己的游戏脚本 -->
-    <script src="game.js"></script>
+    <!-- 加载数据库管理器 -->
+    <script src="database/database_manager.js"></script>
+    
+    <script>
+        let db = null;
+        let dbManager = null;
+        
+        // 初始化数据库
+        async function initDatabase() {
+            try {
+                const SQL = await initSqlJs({
+                    locateFile: file => `lib/${file}`
+                });
+                
+                db = new SQL.Database();
+                dbManager = new DatabaseManager(db);
+                
+                console.log('数据库初始化成功');
+                loadData();
+                updateStats();
+            } catch (error) {
+                console.error('数据库初始化失败:', error);
+                showStatus('数据库初始化失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 切换标签页
+        function switchTab(tabName) {
+            // 移除所有活动状态
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 激活当前标签页
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // 刷新数据
+            if (tabName === 'view') {
+                updateStats();
+            } else if (tabName === 'assets') {
+                loadAssets();
+            } else if (tabName === 'cards') {
+                loadCards();
+            }
+        }
+        
+        // 显示状态消息
+        function showStatus(message, type = 'success', containerId = null) {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            
+            const containers = containerId ? [document.getElementById(containerId)] : 
+                             [document.getElementById('asset-status'), document.getElementById('card-status')];
+            
+            containers.forEach(container => {
+                if (container) {
+                    container.innerHTML = '';
+                    container.appendChild(statusDiv.cloneNode(true));
+                    
+                    setTimeout(() => {
+                        if (container.firstChild) {
+                            container.removeChild(container.firstChild);
+                        }
+                    }, 5000);
+                }
+            });
+        }
+        
+        // 资产表单提交
+        document.getElementById('asset-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const assetType = document.getElementById('asset-type').value;
+            const relativePath = document.getElementById('asset-path').value;
+            
+            try {
+                const sequence = dbManager.getNextSequence(assetType, true);
+                const assetId = dbManager.addAsset(assetType, relativePath, sequence);
+                
+                showStatus(`资产添加成功! ID: ${assetId}`, 'success', 'asset-status');
+                clearAssetForm();
+                loadAssets();
+            } catch (error) {
+                showStatus('添加资产失败: ' + error.message, 'error', 'asset-status');
+            }
+        });
+        
+        // 卡片表单提交
+        document.getElementById('card-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const cardData = {
+                cardType: document.getElementById('card-type').value,
+                sequence: dbManager.getNextSequence(document.getElementById('card-type').value, false),
+                name: document.getElementById('card-name').value,
+                descriptionId: document.getElementById('description-id').value || null,
+                iconId: document.getElementById('icon-id').value || null,
+                functionId: document.getElementById('function-id').value || null,
+                functionData: document.getElementById('function-data').value || null,
+                buildCost: parseInt(document.getElementById('build-cost').value) || 0,
+                maintainCost: parseInt(document.getElementById('maintain-cost').value) || 0,
+                buildProgress: parseInt(document.getElementById('build-progress').value) || 0,
+                buildSpeed: parseInt(document.getElementById('build-speed').value) || 1,
+                treeId: document.getElementById('tree-id').value || null
+            };
+            
+            try {
+                const cardId = dbManager.addCard(cardData);
+                showStatus(`卡片添加成功! ID: ${cardId}`, 'success', 'card-status');
+                clearCardForm();
+                loadCards();
+            } catch (error) {
+                showStatus('添加卡片失败: ' + error.message, 'error', 'card-status');
+            }
+        });
+        
+        // 清空资产表单
+        function clearAssetForm() {
+            document.getElementById('asset-form').reset();
+        }
+        
+        // 清空卡片表单
+        function clearCardForm() {
+            document.getElementById('card-form').reset();
+            document.getElementById('build-cost').value = '0';
+            document.getElementById('maintain-cost').value = '0';
+            document.getElementById('build-progress').value = '0';
+            document.getElementById('build-speed').value = '1';
+        }
+        
+        // 加载资产数据
+        function loadAssets() {
+            if (!dbManager) return;
+            
+            try {
+                const results = db.exec('SELECT * FROM asset ORDER BY id');
+                const assets = dbManager.formatResults(results);
+                displayAssetsTable(assets);
+            } catch (error) {
+                console.error('加载资产失败:', error);
+            }
+        }
+        
+        // 加载卡片数据
+        function loadCards() {
+            if (!dbManager) return;
+            
+            try {
+                const results = db.exec('SELECT * FROM card ORDER BY id');
+                const cards = dbManager.formatResults(results);
+                displayCardsTable(cards);
+            } catch (error) {
+                console.error('加载卡片失败:', error);
+            }
+        }
+        
+        // 显示资产表格
+        function displayAssetsTable(assets) {
+            const container = document.getElementById('assets-table-container');
+            
+            if (assets.length === 0) {
+                container.innerHTML = '<p>暂无资产数据</p>';
+                return;
+            }
+            
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>类型</th>
+                            <th>相对路径</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            assets.forEach(asset => {
+                html += `
+                    <tr>
+                        <td>${asset.id}</td>
+                        <td>${asset.asset_type}</td>
+                        <td>${asset.relative_path}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteAsset('${asset.id}')">🗑️ 删除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // 显示卡片表格
+        function displayCardsTable(cards) {
+            const container = document.getElementById('cards-table-container');
+            
+            if (cards.length === 0) {
+                container.innerHTML = '<p>暂无卡片数据</p>';
+                return;
+            }
+            
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>类型</th>
+                            <th>名称</th>
+                            <th>建造成本</th>
+                            <th>维护成本</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            cards.forEach(card => {
+                html += `
+                    <tr>
+                        <td>${card.id}</td>
+                        <td>${card.card_type}</td>
+                        <td>${card.name}</td>
+                        <td>${card.build_cost}</td>
+                        <td>${card.maintain_cost}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteCard('${card.id}')">🗑️ 删除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // 删除资产
+        function deleteAsset(id) {
+            if (confirm(`确定要删除资产 ${id} 吗？`)) {
+                try {
+                    db.run(`DELETE FROM asset WHERE id = '${id}'`);
+                    showStatus(`资产 ${id} 删除成功`, 'success', 'asset-status');
+                    loadAssets();
+                    updateStats();
+                } catch (error) {
+                    showStatus('删除失败: ' + error.message, 'error', 'asset-status');
+                }
+            }
+        }
+        
+        // 删除卡片
+        function deleteCard(id) {
+            if (confirm(`确定要删除卡片 ${id} 吗？`)) {
+                try {
+                    db.run(`DELETE FROM card WHERE id = '${id}'`);
+                    showStatus(`卡片 ${id} 删除成功`, 'success', 'card-status');
+                    loadCards();
+                    updateStats();
+                } catch (error) {
+                    showStatus('删除失败: ' + error.message, 'error', 'card-status');
+                }
+            }
+        }
+        
+        // 过滤资产
+        function filterAssets() {
+            const searchTerm = document.getElementById('asset-search').value.toLowerCase();
+            const filterType = document.getElementById('asset-filter').value;
+            
+            let query = 'SELECT * FROM asset WHERE 1=1';
+            
+            if (searchTerm) {
+                query += ` AND (id LIKE '%${searchTerm}%' OR relative_path LIKE '%${searchTerm}%')`;
+            }
+            
+            if (filterType) {
+                const typeCode = ASSET_TYPES[filterType];
+                query += ` AND asset_type = '${typeCode}'`;
+            }
+            
+            query += ' ORDER BY id';
+            
+            try {
+                const results = db.exec(query);
+                const assets = dbManager.formatResults(results);
+                displayAssetsTable(assets);
+            } catch (error) {
+                console.error('过滤资产失败:', error);
+            }
+        }
+        
+        // 过滤卡片
+        function filterCards() {
+            const searchTerm = document.getElementById('card-search').value.toLowerCase();
+            const filterType = document.getElementById('card-filter').value;
+            
+            let query = 'SELECT * FROM card WHERE 1=1';
+            
+            if (searchTerm) {
+                query += ` AND (id LIKE '%${searchTerm}%' OR name LIKE '%${searchTerm}%')`;
+            }
+            
+            if (filterType) {
+                const typeCode = CARD_TYPES[filterType];
+                query += ` AND card_type = '${typeCode}'`;
+            }
+            
+            query += ' ORDER BY id';
+            
+            try {
+                const results = db.exec(query);
+                const cards = dbManager.formatResults(results);
+                displayCardsTable(cards);
+            } catch (error) {
+                console.error('过滤卡片失败:', error);
+            }
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            if (!db) return;
+            
+            try {
+                const assetCount = db.exec('SELECT COUNT(*) as count FROM asset')[0].values[0][0];
+                const cardCount = db.exec('SELECT COUNT(*) as count FROM card')[0].values[0][0];
+                
+                const assetTypes = db.exec('SELECT asset_type, COUNT(*) as count FROM asset GROUP BY asset_type');
+                const cardTypes = db.exec('SELECT card_type, COUNT(*) as count FROM card GROUP BY card_type');
+                
+                let statsHtml = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+                            <h3 style="color: #1976d2; margin-bottom: 10px;">📁 资产总数</h3>
+                            <div style="font-size: 2em; font-weight: bold; color: #1976d2;">${assetCount}</div>
+                        </div>
+                        <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; text-align: center;">
+                            <h3 style="color: #7b1fa2; margin-bottom: 10px;">🃏 卡片总数</h3>
+                            <div style="font-size: 2em; font-weight: bold; color: #7b1fa2;">${cardCount}</div>
+                        </div>
+                    </div>
+                `;
+                
+                if (assetTypes.length > 0) {
+                    statsHtml += '<h4>📊 资产类型分布:</h4><ul>';
+                    assetTypes[0].values.forEach(row => {
+                        statsHtml += `<li>${row[0]}: ${row[1]} 个</li>`;
+                    });
+                    statsHtml += '</ul>';
+                }
+                
+                if (cardTypes.length > 0) {
+                    statsHtml += '<h4>📊 卡片类型分布:</h4><ul>';
+                    cardTypes[0].values.forEach(row => {
+                        statsHtml += `<li>${row[0]}: ${row[1]} 个</li>`;
+                    });
+                    statsHtml += '</ul>';
+                }
+                
+                document.getElementById('database-stats').innerHTML = statsHtml;
+            } catch (error) {
+                document.getElementById('database-stats').innerHTML = '统计信息加载失败: ' + error.message;
+            }
+        }
+        
+        // 执行自定义查询
+        function executeCustomQuery() {
+            const query = document.getElementById('query-input').value.trim();
+            if (!query) {
+                alert('请输入查询语句');
+                return;
+            }
+            
+            try {
+                const results = db.exec(query);
+                displayQueryResult(results);
+            } catch (error) {
+                displayQueryResult(null, error.message);
+            }
+        }
+        
+        // 显示查询结果
+        function displayQueryResult(results, error = null) {
+            const container = document.getElementById('query-result');
+            
+            if (error) {
+                container.innerHTML = `<div class="status-message status-error">查询错误: ${error}</div>`;
+                return;
+            }
+            
+            if (!results || results.length === 0) {
+                container.innerHTML = '<div class="status-message status-success">查询执行成功，但没有返回结果</div>';
+                return;
+            }
+            
+            let html = '<div class="status-message status-success">查询执行成功</div>';
+            
+            results.forEach((result, index) => {
+                if (result.columns && result.values) {
+                    html += `
+                        <h4>结果集 ${index + 1}:</h4>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                    `;
+                    
+                    result.columns.forEach(col => {
+                        html += `<th>${col}</th>`;
+                    });
+                    
+                    html += '</tr></thead><tbody>';
+                    
+                    result.values.forEach(row => {
+                        html += '<tr>';
+                        row.forEach(cell => {
+                            html += `<td>${cell !== null ? cell : 'NULL'}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table>';
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 加载所有数据
+        function loadData() {
+            loadAssets();
+            loadCards();
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', initDatabase);
+    </script>
 </body>
 </html>
-#用来生成游戏数据库的代码
